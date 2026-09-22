@@ -1,5 +1,8 @@
 import express from 'express';
 import http from 'http';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db.js';
@@ -8,6 +11,10 @@ import { demoService } from './services/demoService.js';
 import apiRoutes from './routes/apiRoutes.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDist = path.resolve(__dirname, '../../frontend/dist');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,25 +26,34 @@ app.use(express.json());
 // Mount API routes
 app.use('/api', apiRoutes);
 
-// Health check endpoint
-app.get('/', (req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'UPI Offline Mesh Backend (MERN + Socket.IO)',
-    version: '1.0.0',
-    endpoints: [
-      'GET  /api/server-key',
-      'POST /api/demo/send',
-      'GET  /api/mesh/state',
-      'POST /api/mesh/gossip',
-      'POST /api/mesh/flush',
-      'POST /api/mesh/reset',
-      'POST /api/bridge/ingest',
-      'GET  /api/accounts',
-      'GET  /api/transactions'
-    ]
+// Serve frontend build if present
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(frontendDist, 'index.html'));
   });
-});
+} else {
+  // Health check fallback
+  app.get('/', (req, res) => {
+    res.json({
+      status: 'ok',
+      service: 'UPI Offline Mesh Backend (MERN + Socket.IO)',
+      version: '1.0.0',
+      endpoints: [
+        'GET  /api/server-key',
+        'POST /api/demo/send',
+        'GET  /api/mesh/state',
+        'POST /api/mesh/gossip',
+        'POST /api/mesh/flush',
+        'POST /api/mesh/reset',
+        'POST /api/bridge/ingest',
+        'GET  /api/accounts',
+        'GET  /api/transactions'
+      ]
+    });
+  });
+}
 
 // Create HTTP server and initialize Socket.IO
 const httpServer = http.createServer(app);
