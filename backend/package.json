@@ -6,7 +6,12 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "test": "node test/testFullApp.js",
+    "test:crypto": "node test/testCrypto.js",
+    "test:mesh": "node test/testMeshAndIdempotency.js",
+    "test:settlement": "node test/testSettlementAndBridge.js",
+    "test:api": "node test/testApiEndpoints.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
